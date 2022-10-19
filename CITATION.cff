@@ -1,9 +1,10 @@
 cff-version: 1.2.0
-message: "Matthew Hamilton (2022). dce_sa_analysis: An R Markdown program to analyse responses to a Discrete Choice Experiment (DCE) survey exploring online help seeking in socially anxious young people."
+message: "Matthew Hamilton (2022). dce_sa_analysis: An R Markdown program to analyse responses to a Discrete Choice Experiment (DCE) survey exploring online help seeking in socially anxious young people. Zenodo. https://doi.org/10.5281/zenodo.7223286. Version 0.0.9.1"
 authors:
   - family-names: "Hamilton"
     given-names: "Matthew"
 title: "dce_sa_analysis: An R Markdown program to analyse responses to a Discrete Choice Experiment (DCE) survey exploring online help seeking in socially anxious young people"
 version: 0.0.9.1
+doi: 10.5281/zenodo.7223286
 date-released: 2022-06-10
 url: "https://github.com/ready4-dev/dce_sa_analysis"

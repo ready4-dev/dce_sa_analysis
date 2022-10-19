@@ -1,0 +1,126 @@
+---
+title: "Apply choice models to new data"
+output: html_document
+date: "`r format(Sys.Date(),'%d %B %Y')`"
+---
+
+```{r child=if(T){"../Child_RMDs/_Set_Up.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Copyright.Rmd"}else{NULL}, eval=TRUE}
+```
+
+\blandscape
+<!---BLOCK_LANDSCAPE_START--->
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_About_Prediction_Code.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Prepare_Workspace.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Custom_Functions_Text.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/XX_Funs.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Ingest_Again.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl & !exists("dce_design_ls")){"../Child_RMDs/_Ingest_Design_Ls.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl & !exists("records_ls")){"../Child_RMDs/_Ingest_Records_Ls.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl & !exists("mdl_params_ls")){"../Child_RMDs/_Ingest_Mdl_Params_Ls.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl & !exists("mdl_params_ls")){"../Child_RMDs/_Ingest_Mdls_Ls.Rmd"}else{NULL}, eval=TRUE}
+```
+
+# Apply choice models
+
+```{r echo=F}
+#application_log_ls <- list(session_ls = session_ls)
+```
+
+
+## Calculate Willingness To Pay
+
+Our next step is to calculate Willingness To Pay values for the different attributes of social anxiety apps. We can do this both from utililty space or from willingness to pay space.
+
+```{r message=FALSE, results='hide'}
+analysis_ls <- add_analysis(mdls_ls = mdls_ls,
+                            records_ls = records_ls,
+                            what_chr = "wtp")
+```
+
+## Predict market share
+A core motivation for the Entourage DCE was to explore the potential viability of a user-pays financing model for a future roll-out of the Entourage App. This concluding section of the report aims to address this issue by using the models previously estimated to predict what market share Entourage could secure compared to a competing app representative of current offerings and not using an app at all. We do this using two alternative approaches. The first approach is based on the (strong) assumption that our sample is representative of our target market and therefore ignores respondent characteristics. The second includes individual characteristic predictors to make predictions that account for the characteristics of our target market.
+
+### Predict from existing choice situations
+We will use the multinomial logit model we estimated earlier to make predictions about the market share of each option in a given choice situation, assuming that the preferences from our sample are representative of those of our target market.
+
+The first set of predictions we make are of the market shares of the choice situations presented to survey respondents.
+
+```{r}
+analysis_ls <- add_analysis(mdls_ls,
+                            analysis_ls = analysis_ls,
+                            dce_design_ls = dce_design_ls,
+                            records_ls = records_ls,
+                            what_chr = "share")
+```
+
+### Predict from custom choice situations
+
+The previous step had the significant limitation of predictions being confined to choice situations that were included in the survey. To explore the situations that might apply in the roll-out of the Entourage app we need to generate some new choice situations. Our first step is to generate a choice situation of the Entourage app as it is currently configured compared to an app representative of current market offerings and a no-choice option. We can then predict the potential market shares of the options in the new hypothetical choice situation. We make predictions using both the multinomial logit and mixed logit models.
+
+```{r}
+analysis_ls <- add_new_choice_cmprsn(analysis_ls,
+                                     dce_design_ls = dce_design_ls,
+                                     mdl_params_ls = mdl_params_ls,
+                                     new_choices_ls = list(list(Cost = 25, Endorsers = "expert", Information_sharing = NA_character_,
+                                                                Outcomes = NA_character_, Social = "peer_clinician_mod"),
+                                                           list(Cost = 0, Endorsers = NA_character_, Information_sharing = NA_character_,
+                                                                Outcomes = NA_character_, Social = NA_character_)),
+                                     records_ls = records_ls,
+                                     altv_nms_chr = c("Entourage", "Competing App", "No App"),
+                                     with_chr = c("mnl_mlogit_mdl","mixl_mlogit_mdl"))
+```
+
+We can then see how the predicted market share changes in response to variations in this choice situation (in the following example, we add a user controlled information sharing setting to the Entourage app, which results in an extra 6% of predicted market share).
+
+```{r}
+analysis_ls <- add_new_choice_cmprsn(analysis_ls,
+                                     dce_design_ls = dce_design_ls,
+                                     mdl_params_ls = mdl_params_ls,
+                                     new_choices_ls = list(list(Cost = 25, Endorsers = "expert", Information_sharing = "user_settings",
+                                                                Outcomes = NA_character_, Social = "peer_clinician_mod"),
+                                                           list(Cost = 0, Endorsers = NA_character_, Information_sharing = NA_character_,
+                                                                Outcomes = NA_character_, Social = NA_character_)),
+                                     records_ls = records_ls,
+                                     altv_nms_chr = c("Entourage", "Competing App", "No App"),
+                                     with_chr = c("mnl_mlogit_mdl","mixl_mlogit_mdl"))
+```
+
+We can do this iteratively for a range of values, for example by varying the price attribute of the Entourage app.
+
+```{r}
+analysis_ls <- add_cost_comparison(analysis_ls,
+                                   choices_ls = analysis_ls$new_data_ls$comparison_1_ls$new_choices_ls,
+                                   dce_design_ls = dce_design_ls,
+                                   mdls_ls = mdls_ls,
+                                   mdl_params_ls = mdl_params_ls,
+                                   records_ls = records_ls,
+                                   cost_range_dbl = 25:50,
+                                   altv_nms_chr = c("Entourage", "Competing App", "No App"),
+                                   altv_to_modify_1L_int = 1,
+                                   with_chr = c("mnl_mlogit_mdl","mixl_mlogit_mdl")) 
+```
+
+
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Write_Output.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Write_Application_Output.Rmd"}else{NULL}, eval=TRUE}
+```
+
+\elandscape
+<!---BLOCK_LANDSCAPE_STOP--->
+

@@ -1,0 +1,21 @@
+---
+title: "About This Preporocessing Code"
+output: html_document
+date: "2022-10-10"
+---
+
+# About this code
+
+## Purpose
+This program is used to ingest and preprocess survey response data for a Discrete Choice Experiment study that is currently being written up. Future versions of this program will include details of the parent study.
+
+The raw versions of the data to be analysed exist in multiple files. These files need to be appropriately merged and reformatted before we can undertake descriptive and choice modelling analyses. In addition to creating a composite dataset from multiple source files, the program implements pre-processing steps to:
+
+- restrict the dataset to valid responses;
+- account for choice sets being organised into two blocks, only one (randomly selected) of which was presented to respondents;
+- derive variables from participant responses (e.g. calculate a total SIAS score and SIAS based anxiety band from the SIAS assessment questions);
+- format the dataset so that it is compatible with the R packages selected for analysing the data.
+
+```{r child="../Child_RMDs/_Code_Status_And_Use.Rmd", eval=TRUE}
+```
+

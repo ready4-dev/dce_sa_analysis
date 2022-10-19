@@ -1,0 +1,12 @@
+---
+title: "Ingest Analysis List"
+output: html_document
+date: "2022-10-10"
+---
+
+## Ingest application list
+We now ingest the results of applying the models that we previously saved. 
+
+```{r}
+analysis_ls <- readRDS(paste0(paths_ls$Results,"/analysis_ls.RDS")) # UPDATE
+```

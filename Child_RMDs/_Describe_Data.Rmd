@@ -1,0 +1,89 @@
+---
+title: "Pre-process data"
+output: html_document
+date: "`r format(Sys.Date(),'%d %B %Y')`"
+---
+
+```{r child=if(T){"../Child_RMDs/_Set_Up.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(T){"../Child_RMDs/_Set_Up.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Copyright.Rmd"}else{NULL}, eval=TRUE}
+```
+
+\blandscape
+<!---BLOCK_LANDSCAPE_START--->
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_About_Descriptives_Code.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Prepare_Workspace.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Custom_Functions_Text.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/XX_Funs.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Ingest_Again.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl & !exists("dce_design_ls")){"../Child_RMDs/_Ingest_Design_Ls.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl & !exists("records_ls")){"../Child_RMDs/_Ingest_Records_Ls.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl & !exists("mdl_params_ls")){"../Child_RMDs/_Ingest_Mdl_Params_Ls.Rmd"}else{NULL}, eval=TRUE}
+```
+
+# Describe data
+We begin by creating an object to store the descriptive statistics we generate.
+
+```{r warning=FALSE, message=FALSE, results='hide'}
+descriptives_ls <- list()
+```
+
+We create a summary table of descriptive statistics.
+
+```{r warning=FALSE, message=FALSE, results='hide'}
+descriptives_ls$summary_tb <- records_ls$ds_tb %>% 
+  make_smry_tb(var_metadata_tb = mdl_params_ls$candidate_predrs_tb, # Investigate alternative call formulations
+               digits_1L_int = 2L)
+```
+
+We compare selected descriptive statistics from our sample with expected population values.
+
+```{r warning=FALSE, message=FALSE, results='hide'}
+descriptives_ls$prpn_cmprsns_ls <- add_age_and_area_cmprsns(list(),
+                                            ds_tb = records_ls$ds_tb,
+                                            consent_1L_chr = "Y",
+                                            write_to_1L_chr = paths_ls$Replication) %>%
+  add_cut_pnts_cmprsn(cmprsn_nm_1L_chr = "SEIFA_cmprsn_tb",
+                      ds_tb = records_ls$ds_tb,
+                      grouping_var_nms_chr = c("der_SEIFA_Quartile", "SEIFA Disadvantage Quartile"),
+                      expected_dbl = 25,
+                      is_pc_1L_lgl = T) %>% 
+  add_cut_pnts_cmprsn(cmprsn_nm_1L_chr = "urban_cmprsn_tb",
+                      ds_tb = records_ls$ds_tb,
+                      grouping_var_nms_chr = c("der_urban", "Resides in urban area"),
+                      expected_dbl = (make_sos_lup(write_to_1L_chr = paths_ls$Replication) %>% dplyr::pull(share_dbl))[1:2] * 100,
+                      is_pc_1L_lgl = T)
+```
+
+We generate summary tables and plots of choice responses by attribute.
+
+```{r warning=FALSE, message=FALSE, results='hide'}
+descriptives_ls$choice_smrys_ls <- make_choice_smrys(dce_design_ls,
+                                                     mdl_params_ls = mdl_params_ls,
+                                                     records_ls = records_ls,
+                                                     text_size_1L_int = 7,
+                                                     wrapping_1L_int = 20)
+```
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Write_Output.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(F){"../Child_RMDs/_Write_Descriptives_Output.Rmd"}else{NULL}, eval=TRUE}
+```
+
+\elandscape
+<!---BLOCK_LANDSCAPE_STOP--->
+

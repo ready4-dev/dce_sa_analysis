@@ -1,0 +1,8 @@
+---
+title: "Write Output"
+output: html_document
+date: "2022-10-10"
+---
+
+# Write output files
+We now save our output. If running this code interactively, we recommend omitting the `consent_1L_chr` argument.

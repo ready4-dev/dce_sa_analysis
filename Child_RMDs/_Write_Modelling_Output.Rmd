@@ -1,0 +1,24 @@
+---
+title: "Write Modelling Output Files"
+output: html_document
+date: "2022-10-10"
+---
+
+```{r eval=params$eval_1L_lgl, results='hide', message=FALSE, warning=FALSE}
+paths_ls <- write_choice_mdlng_ws(paths_ls) # Not giving prompt.
+```
+
+```{r eval=params$eval_1L_lgl, results='hide', message=FALSE, warning=FALSE}
+write_obj_with_prompt(mdlng_log_ls,
+                      obj_nm_1L_chr = "mdlng_log_ls",
+                      outp_dir_1L_chr = paths_ls$Replication,
+                      consent_1L_chr = "Y")
+```
+
+```{r eval=params$eval_1L_lgl, results='hide', message=FALSE, warning=FALSE}
+write_obj_with_prompt(mdls_ls,
+                      obj_nm_1L_chr = "mdls_ls",
+                      outp_dir_1L_chr = paths_ls$Models,
+                      consent_1L_chr = "Y")
+```
+

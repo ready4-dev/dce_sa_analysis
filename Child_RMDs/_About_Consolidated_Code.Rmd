@@ -1,0 +1,22 @@
+---
+title: "About This Analysis Code"
+output: html_document
+date: "2022-10-10"
+---
+
+# About this code
+
+## Purpose
+This program analyses response data for a Discrete Choice Experiment study that is currently being written up. Future versions of this program will include details of the parent study.
+
+The analysis algorithm implemented by this code performs the following tasks:
+
+- ingest and pre-process survey datasets;
+- generate descriptive statistics and plots;
+- develop and test choice models; and
+- apply choice models to multiple analytic tasks.
+
+
+```{r child="../Child_RMDs/_Code_Status_And_Use.Rmd", eval=TRUE}
+```
+

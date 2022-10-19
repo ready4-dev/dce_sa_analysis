@@ -1,0 +1,119 @@
+---
+output: 
+  bookdown::pdf_document2:
+    includes:
+      in_header: preamble.tex
+    pandoc_args: 
+      -  "--metadata-file=../Header/header_common.yaml"
+      - '--lua-filter=../Filters/scholarly-metadata.lua'
+      - '--lua-filter=../Filters/author-info-blocks.lua'
+    toc: no
+date: "`r format(Sys.Date(),'%d %B %Y')`"
+subtitle: Consolidate Qualitative Assessment Datasets
+params:
+  eval_1L_lgl: True
+  X: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      eval = params$eval_1L_lgl)
+```
+
+```{r child="../Child_RMDs/Copyright.Rmd", eval=TRUE}
+```
+
+\blandscape
+<!---BLOCK_LANDSCAPE_START--->
+
+# About this code
+
+## Motivation
+This program was used to synthesise and reformat the dataset used to qualitatively assess free text respones from participants in a DCE survey that we adminsitered in 2019.
+
+## Status
+This code is the same version as was used to analyse study data. The only items that have been modified are those that remove references to the local directory structure on which study data was stored.
+
+## Use
+When using this code it is important to note that some of the steps in this program involve interactivity - they generate a prompt that a user must respond to before proceeding. Therefore, **this code should be run step by step** (i.e run one chunk at a time and do not try to run the program by knitting the R Markdown version of this code). 
+
+# Prepare workspace
+
+## Install and load required libraries
+If you do not already have the required libraries to run this program installed, you can do so by un-commenting and running the following lines.
+
+```{r }
+# devtools::install_github("ready4-dev/ready4")
+```
+
+Next we load the libraries required to run this program.
+
+```{r message=FALSE, warning=FALSE}
+library(ready4)
+```
+
+## Specify data directories
+
+We begin by specifying where our input data can be located and where we wish to write our outputs to. You must supply these details or the rest of this code will not work. 
+
+```{r}
+paths_ls <- list(input_data_dir_1L_chr = "PROVIDE DETAILS HERE",
+                 qltv_ax_fl_nms_chr = "PROVIDE DETAILS HERE")
+```
+
+```{r echo=FALSE, eval=!is.null(params$X)}
+paths_ls<- params$X$paths_ls
+```
+
+<!-- Create custom functions -->
+
+<!-- We now create a number of functions that we will use in subsequent parts of this program. -->
+
+```{r child="../Child_RMDs/XX_Funs.Rmd", eval=TRUE, echo=F}
+```
+
+# Data ingest and processing
+
+## Ingest data
+We added qualitative assessments of the risk that a response was not genuine to copies of each of the three survey datasets. The below command ingest these files. 
+
+```{r, warning=FALSE, message=FALSE, results='hide'}
+qltv_ax_tb <- bind_tables_from_loc_files(paste0(paste0(paths_ls$input_data_dir_1L_chr,"/"), 
+                                                paths_ls$qltv_ax_fl_nms_chr),
+                                         force_tb_1L_lgl = T, heading_rows_1L_int = 3L) 
+
+```
+<!--In bind_tables_from_loc_files need to test addition of force_numeric_1L_lgl = T to check possible issue with DOB date format data -->
+
+We can now rename variables and add logic for missing values to the consolidated dataset and restrict it to two columns. One column is the unique respondent identifier that will be used to match the assessment to the unit records in the study dataset. The other is the overall qualitative assessment variable which is summarised as a colour codee.
+```{r}
+qltv_ax_tb <- qltv_ax_tb %>%
+  dplyr::mutate(Colour_code = purrr::map_chr(1:dplyr::n(), 
+                                             ~ ifelse(is.na(`Qual Ax 3`[.x])|`Qual Ax 3`[.x]=="NA", 
+                                                      `Qual Ax 1`[.x], 
+                                                      `Qual Ax 3`[.x]))) %>%
+  dplyr::filter(!is.na(Colour_code) & Colour_code!="NA") %>%
+  dplyr::select(tidyselect::all_of(c("ResponseId","Colour_code")))
+```
+
+
+```{r eval=is.null(params$X)}
+write_obj_with_prompt(qltv_ax_tb,
+                      obj_nm_1L_chr = "qltv_ax_tb",
+                      outp_dir_1L_chr = paths_ls$input_data_dir_1L_chr)
+```
+# Save work
+We then save the consolidated qualitative assessment dataset in the same directory as its origin files.
+
+```{r echo=FALSE, eval=!is.null(params$X), results='hide', message=FALSE, warning=FALSE}
+# It is only recommended to supply an argument to consent_1L_chr when knitting the RMD file.
+# Not supplying a conent_1L_chr argument will ensure user is prompted for their active consent to write specific files and directories.
+write_obj_with_prompt(qltv_ax_tb,
+                      obj_nm_1L_chr = "qltv_ax_tb",
+                      outp_dir_1L_chr = paths_ls$input_data_dir_1L_chr,
+                      consent_1L_chr = "Y")
+```
+
+\elandscape
+<!---BLOCK_LANDSCAPE_STOP--->
+

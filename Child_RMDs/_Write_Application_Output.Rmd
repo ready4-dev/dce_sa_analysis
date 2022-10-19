@@ -1,0 +1,13 @@
+---
+title: "Write Application Output Files"
+output: html_document
+date: "2022-10-10"
+---
+
+
+```{r eval=params$eval_1L_lgl, results='hide', message=FALSE, warning=FALSE}
+write_obj_with_prompt(analysis_ls,
+                      obj_nm_1L_chr = "analysis_ls",
+                      outp_dir_1L_chr = paths_ls$Results,
+                      consent_1L_chr = "Y")
+```

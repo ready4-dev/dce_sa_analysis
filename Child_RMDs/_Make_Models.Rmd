@@ -1,0 +1,173 @@
+---
+title: "Make choice models"
+output: html_document
+date: "`r format(Sys.Date(),'%d %B %Y')`"
+---
+
+```{r child=if(T){"../Child_RMDs/_Set_Up.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Copyright.Rmd"}else{NULL}, eval=TRUE}
+```
+
+\blandscape
+<!---BLOCK_LANDSCAPE_START--->
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_About_Modelling_Code.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Prepare_Workspace.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Custom_Functions_Text.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/XX_Funs.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Ingest_Again.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl & !exists("dce_design_ls")){"../Child_RMDs/_Ingest_Design_Ls.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl & !exists("records_ls")){"../Child_RMDs/_Ingest_Records_Ls.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl & !exists("mdl_params_ls")){"../Child_RMDs/_Ingest_Mdl_Params_Ls.Rmd"}else{NULL}, eval=TRUE}
+```
+
+# Fit choice models
+
+We first create objects to log store all the models that we will fit and to log key modelling milestones.
+
+```{r}
+mdls_ls <- list()
+```
+```{r}
+mdlng_log_ls <- list(session_ls = session_ls)
+```
+
+## Model how Social Anxiety app attributes shape the choice behaviour of young people
+In the first set of models we fit, we are only interested in exploring the role of the attributes of alternatives on participant choices and ignore respondent heterogeneity. We therefore begin by fitting a basic multinomial logit model. We create two versions of this model - one fitted using the gmnl package and the other using the mlogit package. The produce almost identical results, but each class of output has different distinctive methods defined for it, which means that each type has ease of use advantages over the other depending on the purpose to which the model will be applied.
+
+```{r}
+mdls_ls <- add_choice_mdls(mdls_ls,
+                           dce_design_ls = dce_design_ls,
+                           mdl_params_ls = mdl_params_ls,
+                           records_ls = records_ls,
+                           purpose_chr = "attributes")
+```
+
+
+## Model the heterogeneity of young people's preferences for Social Anxiety app attributes 
+The next set of models to estimate are those that include random parameters to explore how preferences vary due to respondent heterogeneity. 
+
+We fit a mixed logit model that includes random parameters. At this stage we are looking at overall heterogeneity for each parameter and are not exploring the role of specific individual characteristics. Again we create two versions of this model - one with the gmnl package and the other with the mlogit package. We also fit a Generalized Multinomial Logit Model using the gmnl package.
+
+```{r}
+mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
+                            dce_design_ls = dce_design_ls,
+                            mdl_params_ls = mdl_params_ls,
+                            records_ls = records_ls,
+                            purpose_chr = "heterogeneity")
+```
+
+
+## Model innteractions between respondent characteristics and Social Anxiety app attributes
+We next want to investigate the role of individual respondent characteristics on the coefficients for choice attributes.
+
+Our first step is to explore which characteristics are influential for each choice feature. We do this by sequentially estimating models that interact all respondent characteristics with a specified choice feature. We then identify which respondent characteristics are significant below a specified threshold (in this case 0.05). We include a specified maximum number (in our case 3) of characteristics that were most frequently found to be significant predictors for two or more choice features in models that includes all choice features. For the final models, we excluded the characteristics that relate to respondents' participation in the survey as these are not something that could be meaningfully used in real world applications of the choice model.
+
+```{r}
+mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
+                           dce_design_ls = dce_design_ls,
+                           mdl_params_ls = mdl_params_ls,
+                           records_ls = records_ls,
+                           exclude_chr = c("pilot participant","incomplete choice tasks", "time taken"),
+                           max_concepts_1L_int = 3L,
+                           min_threshold_1L_int = 2L,
+                           purpose_chr = "interactions",
+                           significant_at_1L_dbl = 0.05)
+```
+
+
+## Model Social Anxiety app preference based sub-groups of young people 
+
+We are also interested if it is possible to identify subgroups that are distinguishable based on the nature of their preferences. To do this we estimate Latent Class models. 
+
+### Basic Latent Class Models
+The first model we estimate seeks to identify two different preference based classes. The second adds respondent characteristic predictors, to identify what characteristics predict membership of which class. 
+
+```{r}
+mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
+                           dce_design_ls = dce_design_ls,
+                           mdl_params_ls = mdl_params_ls,
+                           include_int = 1:2,
+                           records_ls = records_ls,
+                           purpose_chr = "classes",
+                           nbr_of_clss_1L_int = 2L)
+```
+
+### Mixed-Mixed Multinomial Logit Model
+The next group of models to be estimate add random parameters to the latent classes.  We fit models with and without correlated random parameters.
+
+```{r}
+mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
+                           dce_design_ls = dce_design_ls,
+                           mdl_params_ls = mdl_params_ls,
+                           include_int = 3,
+                           records_ls = records_ls,
+                           purpose_chr = "classes",
+                           nbr_of_clss_1L_int = 2L,
+                           iterlim = 500)
+```
+
+```{r}
+mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
+                           dce_design_ls = dce_design_ls,
+                           mdl_params_ls = mdl_params_ls,
+                           include_int = 4,
+                           records_ls = records_ls,
+                           purpose_chr = "classes",
+                           nbr_of_clss_1L_int = 2L,
+                           iterlim = 500,
+                           method = "bfgsr") # Method that produces fewest NANs
+```
+
+
+
+## Model Willingness to Pay of young people for distinct attributes of a Social Anxiety App
+Our final group of models are designed to facilitate estimates of Willingness To Pay (WTP) values for Social Anxiety App attributes.
+
+### Scaled Multinomial Logit Model
+We begin by estimating a Scaled Multinomial Logit Model model that we can use later to generate WTP estimates directly from WTP space.
+
+```{r}
+mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
+                           dce_design_ls = dce_design_ls,
+                           mdl_params_ls = mdl_params_ls,
+                           include_int = 1,
+                           records_ls = records_ls,
+                           purpose_chr = "wtp",
+                           iterlim = 500,
+                           method = "bhhh") 
+```
+
+
+### Generalised Multinomial Logit Model 
+We next generate an GMNL model with fixed Cost parameters that allows WTP to vary across individuals. We fit models with and without correlated random parameters.
+
+```{r}
+mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
+                           dce_design_ls = dce_design_ls,
+                           mdl_params_ls = mdl_params_ls,
+                           include_int = 2:3,
+                           records_ls = records_ls,
+                           purpose_chr = "wtp") 
+```
+
+
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Write_Output.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Write_Modelling_Output.Rmd"}else{NULL}, eval=TRUE}
+```
+
+
+\elandscape
+<!---BLOCK_LANDSCAPE_STOP--->

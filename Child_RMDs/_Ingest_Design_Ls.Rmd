@@ -1,0 +1,12 @@
+---
+title: "Ingest DCE Design List"
+output: html_document
+date: "2022-10-10"
+---
+
+### Ingest data on choice features
+We next retrieve data on the choices that participants were presented with from the code we previously ran to create the choice cards. 
+
+```{r eval=params$eval_1L_lgl}
+dce_design_ls <- readRDS(paste0(paths_ls$Replication,"/dce_design_ls.RDS")) # Need to change to get data from online repo
+```

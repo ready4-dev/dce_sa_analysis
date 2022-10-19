@@ -1,0 +1,14 @@
+---
+title: "Write Preprocessing Output Files"
+output: html_document
+date: "2022-10-10"
+---
+
+
+```{r eval=params$eval_1L_lgl, results='hide', message=FALSE, warning=FALSE}
+paths_ls <- write_preprocessing_outp(paths_ls,
+                                     mdl_params_ls = mdl_params_ls,
+                                     preprocessing_log_ls = preprocessing_log_ls,
+                                     records_ls = records_ls,
+                                     consent_1L_chr = "Y")
+```

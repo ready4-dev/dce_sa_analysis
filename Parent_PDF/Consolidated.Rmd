@@ -1,0 +1,74 @@
+---
+output: 
+  bookdown::pdf_document2:
+    includes:
+      in_header: preamble.tex
+    pandoc_args: 
+      -  "--metadata-file=../Header/header_common.yaml"
+      - '--lua-filter=../Filters/scholarly-metadata.lua'
+      - '--lua-filter=../Filters/author-info-blocks.lua'
+    toc: no
+date: "`r format(Sys.Date(),'%d %B %Y')`"
+subtitle: Complete Analysis Program (reproduction)
+params:
+  eval_1L_lgl: !r FALSE
+  is_subroutine_lgl: !r FALSE
+  X: NULL
+---
+
+```{r setup, include=FALSE}
+library(magrittr)
+knitr::opts_chunk$set(echo = TRUE,
+                      eval = params$eval_1L_lgl)
+```
+
+```{r child=if(T){"../Child_RMDs/_Copyright.Rmd"}else{NULL}, eval=TRUE}
+```
+
+<!-- Front matter. -->
+
+\blandscape
+<!---BLOCK_LANDSCAPE_START--->
+
+```{r child=if(T){"../Child_RMDs/_About_Consolidated_Code.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(T){"../Child_RMDs/_Prepare_Workspace.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(T){"../Child_RMDs/_Custom_Functions_Text.Rmd"}else{NULL}, eval=TRUE}
+```
+
+```{r child=if(T){"../Child_RMDs/XX_Funs.Rmd"}else{NULL}, eval=TRUE}
+```
+
+\elandscape
+<!---BLOCK_LANDSCAPE_STOP--->
+
+<!-- Main Body. -->
+
+```{r child=if(T){"../Child_RMDs/_Pre_Process_Data.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(T){"../Child_RMDs/_Describe_Data.Rmd"}else{NULL}, eval=T}
+```
+```{r child=if(T){"../Child_RMDs/_Make_Models.Rmd"}else{NULL}, eval=T}
+```
+```{r child=if(T){"../Child_RMDs/_Apply_Models.Rmd"}else{NULL}, eval=T}
+```
+<!-- Writing Results. -->
+
+\blandscape
+<!---BLOCK_LANDSCAPE_START--->
+
+```{r child=if(T){"../Child_RMDs/_Write_Output.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(T){"../Child_RMDs/_Write_Preprocessing_Output.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(T){"../Child_RMDs/_Write_Descriptives_Output.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(T){"../Child_RMDs/_Write_Modelling_Output.Rmd"}else{NULL}, eval=TRUE}
+```
+```{r child=if(T){"../Child_RMDs/_Write_Application_Output.Rmd"}else{NULL}, eval=TRUE}
+```
+\elandscape
+<!---BLOCK_LANDSCAPE_STOP--->

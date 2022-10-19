@@ -1,0 +1,12 @@
+---
+title: "Ingest Models List"
+output: html_document
+date: "2022-10-10"
+---
+
+## Ingest choice models
+We now ingest the choice models that we previously fitted. 
+
+```{r}
+mdls_ls <- readRDS(paste0(paths_ls$Models,"/mdls_ls.RDS"))
+```

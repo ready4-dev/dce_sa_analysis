@@ -1,0 +1,42 @@
+---
+title: "XX_Funs"
+output: html_document
+date: '2022-06-08'
+---
+
+
+```{r echo=FALSE}
+#library(mychoice)
+```
+
+```{r echo=FALSE}
+# convert_from_dummy <- function(choice_att_tb,
+#                                attribute_nm,
+#                                dummy_nms_vec,
+#                                level_nms_vec){
+#   choice_att_tb %>% 
+#     dplyr::mutate(!!rlang::sym(attribute_nm) := purrr::map_chr(1:nrow(choice_att_tb),
+#                                                                # !!rlang::sym(names_factor_atts_vec[.y]),
+#                                                                #indx_nbr <- .y,
+#                                                                ~ choice_att_tb %>%
+#                                                                  dplyr::select(dummy_nms_vec) %>%
+#                                                                  dplyr::slice(.x) %>%
+#                                                                  unlist() %>%
+#                                                                  as.vector() %>%
+#                                                                  which() %>%
+#                                                                  + 1 %>%
+#                                                                  level_nms_vec[.] %>%
+#                                                                  ifelse(identical(.,character(0)),level_nms_vec[1],.)
+#                                                                
+#     ) %>% as.factor())
+# }
+## 
+# convert_na_col_to_logical <- function(col) {
+#   if(suppressWarnings(all(is.na(col)))) {
+#     as.logical(as.character(col))
+#   } else {
+#     col
+#   }
+# }
+
+```

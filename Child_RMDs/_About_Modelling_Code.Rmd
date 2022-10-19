@@ -1,0 +1,21 @@
+---
+title: "About This Modelling Code"
+output: html_document
+date: "2022-10-10"
+---
+
+# About this code
+
+## Purpose
+This program is used to fit choice models to a dataset from a Discrete Choice Experiment study that is currently being written up. Future versions of this program will include details of the parent study.
+
+This program fits models that explore:
+
+- how choice attributes affect the responses of our sample;
+- the heterogeneity of these impacts within our sample;
+- how individual respondent characteristics interacted with choice attributes; and 
+- whether we can identify distinct sub-groups based on preference profile. 
+
+```{r child="../Child_RMDs/_Code_Status_And_Use.Rmd", eval=TRUE}
+```
+

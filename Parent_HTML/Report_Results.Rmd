@@ -1,0 +1,23 @@
+---
+output: 
+  bookdown::html_document2:
+    pandoc_args: 
+      -  "--metadata-file=../Header/header_common.yaml"
+      - '--lua-filter=../Filters/scholarly-metadata.lua'
+      - '--lua-filter=../Filters/author-info-blocks.lua'
+    toc: no
+date: "`r format(Sys.Date(),'%d %B %Y')`"
+subtitle: Results Summary
+params:
+  eval_1L_lgl: !r FALSE
+  is_subroutine_lgl: !r TRUE
+  X: NULL
+---
+
+```{r setup, include=FALSE}
+library(magrittr)
+knitr::opts_chunk$set(echo = TRUE,
+                      eval = params$eval_1L_lgl)
+```
+```{r child=if(params$is_subroutine_lgl){"../Child_RMDs/_Exhibit_Results.Rmd"}else{NULL}, eval=T}
+```

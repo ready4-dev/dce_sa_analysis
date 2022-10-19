@@ -1,0 +1,12 @@
+---
+title: "Ingest Model Parameters List"
+output: html_document
+date: "2022-10-10"
+---
+
+### Ingest modelling paramters dataset
+We now ingest the dataset that modelling parameters dataset that specifies the variable names of candidate predictors. 
+
+```{r eval=params$eval_1L_lgl}
+mdl_params_ls <- readRDS(paste0(paths_ls$Replication,"/mdl_params_ls.RDS")) # Need to change to get data from online repo
+```

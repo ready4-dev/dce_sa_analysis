@@ -19,6 +19,7 @@ Next we load the libraries required to run this program.
 ```{r message=FALSE, warning=FALSE}
 library(ready4)
 library(mychoice)
+library(ready4use)
 ```
 
 ```{r include=FALSE}

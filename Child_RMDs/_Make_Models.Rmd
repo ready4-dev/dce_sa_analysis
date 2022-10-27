@@ -68,24 +68,22 @@ mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
                             purpose_chr = "heterogeneity")
 ```
 
-
-## Model innteractions between respondent characteristics and Social Anxiety app attributes
+## Model interactions between respondent characteristics and Social Anxiety app attributes
 We next want to investigate the role of individual respondent characteristics on the coefficients for choice attributes.
 
 Our first step is to explore which characteristics are influential for each choice feature. We do this by sequentially estimating models that interact all respondent characteristics with a specified choice feature. We then identify which respondent characteristics are significant below a specified threshold (in this case 0.05). We include a specified maximum number (in our case 3) of characteristics that were most frequently found to be significant predictors for two or more choice features in models that includes all choice features. For the final models, we excluded the characteristics that relate to respondents' participation in the survey as these are not something that could be meaningfully used in real world applications of the choice model.
 
-```{r}
+```{r }
 mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
                            dce_design_ls = dce_design_ls,
                            mdl_params_ls = mdl_params_ls,
                            records_ls = records_ls,
                            exclude_chr = c("pilot participant","incomplete choice tasks", "time taken"),
-                           max_concepts_1L_int = 3L,
+                           max_concepts_1L_int = 2L,
                            min_threshold_1L_int = 2L,
                            purpose_chr = "interactions",
                            significant_at_1L_dbl = 0.05)
 ```
-
 
 ## Model Social Anxiety app preference based sub-groups of young people 
 
@@ -105,17 +103,17 @@ mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
 ```
 
 ### Mixed-Mixed Multinomial Logit Model
-The next group of models to be estimate add random parameters to the latent classes.  We fit models with and without correlated random parameters.
+We next fit a model that adds correlated random parameters to the latent classes.  
 
-```{r}
-mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
-                           dce_design_ls = dce_design_ls,
-                           mdl_params_ls = mdl_params_ls,
-                           include_int = 3,
-                           records_ls = records_ls,
-                           purpose_chr = "classes",
-                           nbr_of_clss_1L_int = 2L,
-                           iterlim = 500)
+```{r echo=FALSE, eval=FALSE}
+# mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
+#                            dce_design_ls = dce_design_ls,
+#                            mdl_params_ls = mdl_params_ls,
+#                            include_int = 3,
+#                            records_ls = records_ls,
+#                            purpose_chr = "classes",
+#                            nbr_of_clss_1L_int = 2L,
+#                            iterlim = 500)
 ```
 
 ```{r}
@@ -151,13 +149,13 @@ mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
 
 
 ### Generalised Multinomial Logit Model 
-We next generate an GMNL model with fixed Cost parameters that allows WTP to vary across individuals. We fit models with and without correlated random parameters.
+We next generate an GMNL model with fixed Cost parameters and correlated random parameters that allows WTP to vary across individuals. 
 
 ```{r}
 mdls_ls <- add_choice_mdls(mdls_ls = mdls_ls,
                            dce_design_ls = dce_design_ls,
                            mdl_params_ls = mdl_params_ls,
-                           include_int = 2:3,
+                           include_int = 3,
                            records_ls = records_ls,
                            purpose_chr = "wtp") 
 ```

@@ -166,9 +166,10 @@ The next step is to extract participant's responses to the choice cards as a mat
 The design matrix we loaded in a previous step is not yet in the correct order. That is because we randomly sampled from that design matrix to create the choice cards in each block. We therefore need to reorder our design matrix to match how choices were presented to participants in the survey. Our survey included an opt out choice option on each choice card. We need to identify that variable prior to analysi by adding an alternative specific constant. Our database of valid responses is currently in a wide format - each case contains data on all choices presented in each choice card. For the analyses we plan on running, our choice response matrix needs to be in long format - each choice in a choice set needs to be its own case. We also need to selectively apply transformations to attribute variables depending on whether they are continuous or factors.  In our survey, only the cost attribute is a continuous variable. All the factor attributes require the creation of dummy variables. 
 
 ```{r warning=FALSE, message=FALSE, results='hide'}
-records_ls$case_choices_mat <- make_case_choices_mat(records_ls$ds_tb, block_indcs_ls = dce_design_ls$block_indcs_ls,
+records_ls$case_choices_mat <- make_case_choices_mat(records_ls$ds_tb, 
+                                                     block_idxs_ls = dce_design_ls$choice_cards_ls[[length(dce_design_ls$choice_cards_ls)]]$block_idxs_ls,
                                                      choice_sets_ls = dce_design_ls$choice_sets_ls, 
-                                                     design_mat = dce_design_ls$design_mat,
+                                                     design_mat = dce_design_ls$efnt_dsn_ls[[length(dce_design_ls$efnt_dsn_ls)]]$design,
                                                      choice_vars_pfx_1L_chr = records_ls$choice_vars_pfx_1L_chr)
 ```
 ```{r warning=FALSE, message=FALSE, results='hide'}

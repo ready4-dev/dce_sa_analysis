@@ -194,7 +194,6 @@ descriptives_ls$choice_smrys_ls$Cost$plot_plt
 
 \newpage
 
-
 ### Opt out alternative
 ```{r echo=FALSE}
 descriptives_ls$choice_smrys_ls$opt_out$table_tbl %>%
@@ -209,35 +208,7 @@ descriptives_ls$choice_smrys_ls$opt_out$plot_plt
 
 # Models
 ```{r echo=F}
-make_mdl_smry <- function(model_mdl,
-                          return_1L_chr = "coefficients"){
-  smry_ls <- summary(model_mdl) 
-  if("gmnl" %in% class(model_mdl)#startsWith(deparse(smry_ls$call)[1],"gmnl")
-     ){
-    smry_ls <- gmnl::getSummary.gmnl(model_mdl)
-    coef_mat <- smry_ls$coef
-      perf_tb <- smry_ls$sumstat %>% purrr::discard(is.na) %>% as.data.frame() %>% tibble::rownames_to_column("Statistic") %>%
-      tibble::as_tibble() %>% dplyr::rename(Value = ".") 
-    p_var_nm_1L_chr <- "p"
-  }else{
-  coef_mat <- smry_ls$CoefTable
-  perf_tb <- tibble::tibble(Statistic = c("logLik","AIC", "BIC","N"),
-                            Value = c(smry_ls$logLik,AIC(model_mdl),BIC(model_mdl),smry_ls$freq %>% sum()))
-  p_var_nm_1L_chr <-"Pr(>|z|)"
-  }
-  call_1L_chr <- smry_ls$call %>% deparse() %>% paste0(collapse = "") %>% stringr::str_squish()
-  coef_tb <- coef_mat %>%  as.data.frame() %>% tibble::rownames_to_column("Parameter") %>% 
-      tibble::as_tibble() %>% dplyr::mutate(sign = cut(!!rlang::sym(p_var_nm_1L_chr), breaks = c(-Inf, 0.001, 0.01, 0.05, 0.1,Inf), 
-                                                       labels = c("***", "**", "*", ".","n.s."), right = FALSE)) 
-  if(return_1L_chr == "coefficients")
-    return_xx <- coef_tb 
-  if(return_1L_chr == "performance")
-    return_xx <- perf_tb %>%
-    dplyr::filter(!is.na(Value))
-  if(return_1L_chr == "call")
-    return_xx <- call_1L_chr
-  return(return_xx)
-}
+
 ```
 
 ## Models of how social anxiety app attributes shape the choice behaviour of young people
@@ -333,13 +304,13 @@ mdls_ls$att_predn_mdls_ls %>% make_signft_concepts_tbl(mdl_params_ls) %>%
 ```
 
 
-```{r echo=FALSE}
+```{r echo=FALSE, eval=FALSE}
 make_mdl_smry(mdls_ls$mixl_mdl_ls$jurisdiction_gender_urbanicity) %>%
   kableExtra::kbl(booktabs = T, longtable = T, 
                   caption = "Mixed Logit Model with gender, jurisdiction and urbanicity characteristics (estimated with gmnl package)") %>%
     kableExtra::footnote(general = "Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1")
 ```
-```{r echo=FALSE}
+```{r echo=FALSE, eval=FALSE}
 make_mdl_smry(mdls_ls$mixl_mdl_ls$`area disadvantage_gender_urbanicity`, return_1L_chr = "performance") %>% 
   kableExtra::kbl(booktabs = T, longtable = T, 
                   caption = "Mixed Logit Model with gender, jurisdiction and urbanicity characteristics (estimated with gmnl package)")
@@ -348,13 +319,13 @@ make_mdl_smry(mdls_ls$mixl_mdl_ls$`area disadvantage_gender_urbanicity`, return_
 \newpage
 
 
-```{r echo=FALSE}
+```{r echo=FALSE, eval=FALSE}
 make_mdl_smry(mdls_ls$mixl_mdl_ls$`jurisdiction_area disadvantage_gender`) %>%
   kableExtra::kbl(booktabs = T, longtable = T, 
                   caption = "Mixed Logit Model with gender, jurisdiction and area disadvantage characteristics (estimated with gmnl package)") %>%
     kableExtra::footnote(general = "Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1")
 ```
-```{r echo=FALSE}
+```{r echo=FALSE, eval=FALSE}
 make_mdl_smry(mdls_ls$mixl_mdl_ls$`jurisdiction_area disadvantage_gender`, return_1L_chr = "performance") %>% 
   kableExtra::kbl(booktabs = T, longtable = T, 
                   caption = "Mixed Logit Model with gender, jurisdiction and area disadvantage characteristics (estimated with gmnl package)")
@@ -363,13 +334,13 @@ make_mdl_smry(mdls_ls$mixl_mdl_ls$`jurisdiction_area disadvantage_gender`, retur
 \newpage
 
 
-```{r echo=FALSE}
+```{r echo=FALSE, eval=FALSE}
 make_mdl_smry(mdls_ls$mixl_mdl_ls$`area disadvantage_gender_urbanicity`) %>%
   kableExtra::kbl(booktabs = T, longtable = T, 
                   caption = "Mixed Logit Model with gender, area disadvantage and urbanicity characteristics (estimated with gmnl package)") %>%
     kableExtra::footnote(general = "Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1")
 ```
-```{r echo=FALSE}
+```{r echo=FALSE, eval=FALSE}
 make_mdl_smry(mdls_ls$mixl_mdl_ls$`area disadvantage_gender_urbanicity`, return_1L_chr = "performance") %>% 
   kableExtra::kbl(booktabs = T, longtable = T, 
                   caption = "Mixed Logit Model with gender, area disadvantage and urbanicity characteristics (estimated with gmnl package)")
@@ -410,20 +381,6 @@ make_mdl_smry(mdls_ls$lc_mxd_mdl) %>%
 make_mdl_smry(mdls_ls$lc_mxd_mdl, return_1L_chr = "performance") %>% 
   kableExtra::kbl(booktabs = T, longtable = T, 
                   caption = "Mixed latent class model (estimated with gmnl package)")
-```
-
-\newpage
-
-```{r echo=FALSE}
-make_mdl_smry(mdls_ls$mm_mdl) %>%
-  kableExtra::kbl(booktabs = T, longtable = T, 
-                  caption = "Mixed mixed with uncorrelated random parameters (estimated with gmnl package)") %>%
-    kableExtra::footnote(general = "Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1")
-```
-```{r echo=FALSE}
-make_mdl_smry(mdls_ls$mm_mdl, return_1L_chr = "performance") %>% 
-  kableExtra::kbl(booktabs = T, longtable = T, 
-                  caption = "Mixed mixed with uncorrelated random parameters (estimated with gmnl package)")
 ```
 
 \newpage
@@ -488,14 +445,6 @@ analysis_ls$wtp_smnl_smry_ls$CoefTable %>%  as.data.frame() %>% tibble::rownames
 We can also explore how WTP values vary across individuals.
 ```{r}
 
-```
-
-```{r echo=FALSE}
-#analysis_ls$wtp_gmnl_smry_ls
-make_mdl_smry(mdls_ls$gmnl_wtp_mdl) %>%
-  kableExtra::kbl(booktabs = T, longtable = T, 
-                  caption = "Willingness to pay estimated from generalised multinomial logit model with uncorrelated random parameters (estimated with gmnl package)") %>%
-    kableExtra::footnote(general = "Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1")
 ```
 
 ```{r echo=FALSE}

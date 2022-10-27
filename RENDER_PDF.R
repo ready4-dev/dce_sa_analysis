@@ -44,12 +44,6 @@ rmarkdown::render("Parent_PDF/Part_4_Use_Models.RMD",
                   output_file = "Use_Models.pdf", # Omit reproducibility section
                   output_dir = "PDFs")
 
-# To render the program that makes the design matrix:
-rmarkdown::render("Parent_PDF/Make_Design_Ls.RMD", # This subroutine needs to be relocated into the design program.
-                  output_format = NULL,
-                  params = params_ls, 
-                  output_file = "Make_Design_Ls.pdf",
-                  output_dir = "PDFs")
 # To render the program that creates a consolidated Qualitative Assessment Table:
 rmarkdown::render("Parent_PDF/Make_Consolidated_Qltv_Ds.RMD",
                   output_format = NULL,

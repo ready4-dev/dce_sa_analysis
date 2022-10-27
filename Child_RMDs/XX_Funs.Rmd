@@ -4,9 +4,337 @@ output: html_document
 date: '2022-06-08'
 ---
 
+```{r echo=FALSE}
+add_analysis <- function(analysis_ls = list(),
+                         mdls_ls,
+                         what_chr = c("wtp"),
+                         dce_design_ls = NULL,
+                         records_ls = NULL){
+  if("wtp" %in% what_chr){
+    what_chr <- c(what_chr,"wtp_gmnl","wtp_gmnl_cor","wtp_smnl","wtp_utl_sp") %>% unique()
+  }
+  if("share" %in% what_chr){
+    what_chr <- c(what_chr,"prpns_sample","prpns_mnl") %>% unique()
+  }
+  if(("wtp_gmnl" %in% what_chr) & !is.null(mdls_ls$gmnl_wtp_mdl)){
+    analysis_ls$wtp_gmnl_smry_ls <- make_gmnl_mdl_smry(mdls_ls$gmnl_wtp_mdl)
+  }
+  if(("wtp_gmnl_cor" %in% what_chr) & !is.null(mdls_ls$gmnl_wtp_cor_mdl)){
+    analysis_ls$wtp_gmnl_cor_smry_ls <- make_gmnl_mdl_smry(mdls_ls$gmnl_wtp_cor_mdl)
+  }
+  if(("wtp_smnl" %in% what_chr) & !is.null(mdls_ls$smnl_mdl)){
+    analysis_ls$wtp_smnl_smry_ls <- make_gmnl_mdl_smry(mdls_ls$smnl_mdl)
+    analysis_ls$wtp_smnl_price_num <- c(-exp(stats::coef(mdls_ls$smnl_mdl)["het.(Intercept)"]),
+                                        {msm::deltamethod(~ -exp(x6), stats::coef(mdls_ls$smnl_mdl),
+                                                          stats::vcov(mdls_ls$smnl_mdl),ses=T)})
+  }
+  if(("wtp_utl_sp" %in% what_chr) & !is.null(mdls_ls$mnl_mdl)){
+    analysis_ls$wtp_utl_sp_mat <- make_wtp_mat(mdls_ls$mnl_mdl,
+                                               cost_var_nm_1L_chr = records_ls$cost_var_nm_1L_chr)
+  }
+  if("prpns_sample" %in% what_chr){
+    analysis_ls$prpns_obsd_dbl <- ((records_ls$ds_dfidx$option_id[records_ls$ds_dfidx$choice == TRUE] %>%
+                                      table())/(nrow(records_ls$ds_dfidx)/length(dce_design_ls$choice_sets_ls$alternatives_chr)) %>% sum()) %>%
+      stats::setNames(dce_design_ls$choice_sets_ls$alternatives_chr)
+  }
+  if("prpns_mnl" %in% what_chr){
+    append_ls <- mdls_ls[c("mnl_mdl","mnl_mlogit_mdl","mixl_mdl","mixl_mlogit_mdl")] %>%
+      purrr::map2(c("mnl_mdl","mnl_mlogit_mdl","mixl_mdl","mixl_mlogit_mdl"),
+                  ~{
+                    if(.y=="mnl_mdl"){
+                      probs_mat <- fitted(.x, type = "probabilities",
+                                          outcome = {if(.y=="mnl_mdl"){F}else{NULL}})
+                      predd_dbl <-(purrr::map_dbl(1:length(dce_design_ls$choice_sets_ls$alternatives_chr),
+                                                  ~sum(probs_mat[,.x]))/nrow(probs_mat))
+                    }else{
+                      if(.y == "mnl_mlogit_mdl"){
+                        predd_dbl <- predict(.x)
+                      }else{
+                        if(.y=="mixl_mdl"){
+                          probs_mat <- fitted(.x, type = "probabilities",
+                                              outcome = {if(.y=="mixl_mdl"){F}else{NULL}})
+                        }else{
+                          probs_mat <- predict(.x,
+                                               newdata = records_ls$ds_dfidx)
+                        }
+                      }
+
+                    }
+                    if(.y %in% c("mnl_mdl","mnl_mlogit_mdl")){
+                      predd_dbl %>%
+                        stats::setNames(dce_design_ls$choice_sets_ls$alternatives_chr)
+                    }else{
+                      predd_tb <- purrr::map_dfr(1:length(dce_design_ls$choice_sets_ls$alternatives_chr),
+                                                 ~tibble::tibble(Mean = mean(probs_mat[,.x]),
+                                                                 SD = sd(probs_mat[,.x])))
+                      predd_tb %>%
+                        dplyr::mutate(Alternative = dce_design_ls$choice_sets_ls$alternatives_chr) %>%
+                        dplyr::select(Alternative, Mean, SD)
+                    }
+                  }) %>%
+      stats::setNames(c("prpns_mnl_prdn_dbl","prpns_mnl_mlogit_prdn_dbl","prpns_mixl_prdn_tb","prpns_mixl_mlogit_prdn_tb"))
+    analysis_ls$prpns_mnl_prdn_dbl <- analysis_ls$prpns_mnl_mlogit_prdn_dbl <- NULL
+    analysis_ls <- append(analysis_ls,append_ls)
+    probs_mat <- fitted(mdls_ls$mnl_mlogit_mdl, type = "probabilities")
+  }
+  return(analysis_ls)
+}
+```
 
 ```{r echo=FALSE}
-#library(mychoice)
+add_choice_mdls <- function(mdls_ls = list(),
+                            dce_design_ls,
+                            mdl_params_ls,
+                            records_ls,
+                            exclude_chr = character(0),
+                            indl_predrs_chr = NA_character_,
+                            include_int = 1:4,
+                            max_concepts_1L_int = 2L,
+                            min_threshold_1L_int = 2L,
+                            nbr_of_clss_1L_int = 2L,
+                            purpose_chr = "attributes",
+                            significant_at_1L_dbl = 0.05,
+                            ...){
+  if("attributes" %in% purpose_chr){
+    if(1 %in% include_int)
+      mdls_ls$mnl_mdl <- fit_choice_mdl(dce_design_ls,
+                                        mdl_params_ls = mdl_params_ls,
+                                        records_ls = records_ls,
+                                        return_1L_chr = "mnl",
+                                        ...)
+    if(2 %in% include_int)
+      mdls_ls$mnl_mlogit_mdl <- fit_choice_mdl(dce_design_ls,
+                                               mdl_params_ls = mdl_params_ls,
+                                               records_ls = records_ls,
+                                               use_mlogit_pkg_1L_lgl = T,
+                                               return_1L_chr = "mnl",
+                                               ...)
+  }
+  if("heterogeneity" %in% purpose_chr){
+    if(1 %in% include_int)
+      mdls_ls$mixl_mdl <- fit_choice_mdl(dce_design_ls,
+                                         correlation_1L_lgl = T,
+                                         mdl_params_ls = mdl_params_ls,
+                                         records_ls = records_ls,
+                                         return_1L_chr = "mixl",
+                                         ...)
+    if(2 %in% include_int)
+      mdls_ls$mixl_mlogit_mdl <- fit_choice_mdl(dce_design_ls,
+                                                correlation_1L_lgl = T,
+                                                mdl_params_ls = mdl_params_ls,
+                                                records_ls = records_ls,
+                                                use_mlogit_pkg_1L_lgl = T,
+                                                return_1L_chr = "mixl",
+                                                ...)
+    if(3 %in% include_int)
+      mdls_ls$gmnl_mdl <- fit_choice_mdl(dce_design_ls,
+                                         correlation_1L_lgl = T,
+                                         mdl_params_ls = mdl_params_ls,
+                                         records_ls = records_ls,
+                                         return_1L_chr = "gmnl",
+                                         ...)
+  }
+  if("interactions" %in% purpose_chr){
+    if(1 %in% include_int)
+      mdls_ls$att_predn_mdls_ls <- make_att_predn_mdls_ls(dce_design_ls,
+                                                          mdl_params_ls = mdl_params_ls,
+                                                          records_ls = records_ls,
+                                                          significant_at_1L_dbl = significant_at_1L_dbl)
+    if(2 %in% include_int)
+      mdls_ls$mixl_mdl_ls <- make_mxd_lgt_mdl_ls(att_predn_mdls_ls = mdls_ls$att_predn_mdls_ls,
+                                                 dce_design_ls = dce_design_ls,
+                                                 mdl_params_ls = mdl_params_ls,
+                                                 records_ls = records_ls,
+                                                 exclude_chr = exclude_chr,
+                                                 max_concepts_1L_int = max_concepts_1L_int,
+                                                 min_threshold_1L_int = min_threshold_1L_int)
+  }
+  if("classes" %in% purpose_chr){
+    if(1 %in% include_int)
+      mdls_ls$lc_mdl <- fit_choice_mdl(dce_design_ls,
+                                       mdl_params_ls = mdl_params_ls,
+                                       records_ls = records_ls,
+                                       return_1L_chr = "lc",
+                                       indl_predrs_chr = character(0),
+                                       nbr_of_clss_1L_int = nbr_of_clss_1L_int,
+                                       ...)
+    if(2 %in% include_int)
+      mdls_ls$lc_mxd_mdl <- fit_choice_mdl(dce_design_ls,
+                                           mdl_params_ls = mdl_params_ls,
+                                           records_ls = records_ls,
+                                           return_1L_chr = "lc",
+                                           indl_predrs_chr = indl_predrs_chr,
+                                           nbr_of_clss_1L_int = nbr_of_clss_1L_int,
+                                           ...)
+    if(3 %in% include_int)
+      mdls_ls$mm_mdl <- fit_choice_mdl(dce_design_ls,
+                                       mdl_params_ls = mdl_params_ls,
+                                       records_ls = records_ls,
+                                       return_1L_chr = "mm",
+                                       indl_predrs_chr = indl_predrs_chr,
+                                       nbr_of_clss_1L_int = nbr_of_clss_1L_int,
+                                       ...)
+    if(4 %in% include_int)
+      mdls_ls$mm_cor_mdl <- fit_choice_mdl(dce_design_ls,
+                                           mdl_params_ls = mdl_params_ls,
+                                           records_ls = records_ls,
+                                           return_1L_chr = "mm",
+                                           correlation_1L_lgl = T,
+                                           indl_predrs_chr = indl_predrs_chr,
+                                           nbr_of_clss_1L_int = nbr_of_clss_1L_int,
+                                           ...)
+  }
+  if("wtp" %in% purpose_chr){
+    if(1 %in% include_int)
+      mdls_ls$smnl_mdl <- fit_choice_mdl(dce_design_ls,
+                                         mdl_params_ls = mdl_params_ls,
+                                         records_ls = records_ls,
+                                         return_1L_chr = "smnl",
+                                         indl_predrs_chr = character(0),
+                                         ...)
+    if(2 %in% include_int)
+      mdls_ls$gmnl_wtp_mdl <- fit_choice_mdl(dce_design_ls,
+                                             mdl_params_ls = mdl_params_ls,
+                                             records_ls = records_ls,
+                                             return_1L_chr = "gmnl",
+                                             indl_predrs_chr = character(0),
+                                             smnl_mdl = mdls_ls$smnl_mdl,
+                                             ...)
+    if(3 %in% include_int)
+      mdls_ls$gmnl_wtp_cor_mdl <- fit_choice_mdl(dce_design_ls,
+                                                 mdl_params_ls = mdl_params_ls,
+                                                 records_ls = records_ls,
+                                                 return_1L_chr = "gmnl",
+                                                 indl_predrs_chr = character(0),
+                                                 smnl_mdl = mdls_ls$smnl_mdl,
+                                                 correlation_1L_lgl = T,
+                                                 ...)
+  }
+  return(mdls_ls)
+}
+```
+```{r}
+make_mdl_smry <- function(model_mdl,
+                          return_1L_chr = "coefficients"){
+  smry_ls <- summary(model_mdl) 
+  if("gmnl" %in% class(model_mdl)#startsWith(deparse(smry_ls$call)[1],"gmnl")
+     ){
+    smry_ls <- gmnl::getSummary.gmnl(model_mdl)
+    coef_mat <- smry_ls$coef
+      perf_tb <- smry_ls$sumstat %>% purrr::discard(is.na) %>% as.data.frame() %>% tibble::rownames_to_column("Statistic") %>%
+      tibble::as_tibble() %>% dplyr::rename(Value = ".") 
+    p_var_nm_1L_chr <- "p"
+  }else{
+  coef_mat <- smry_ls$CoefTable
+  perf_tb <- tibble::tibble(Statistic = c("logLik","AIC", "BIC","N"),
+                            Value = c(smry_ls$logLik,AIC(model_mdl),BIC(model_mdl),smry_ls$freq %>% sum()))
+  p_var_nm_1L_chr <-"Pr(>|z|)"
+  }
+  call_1L_chr <- smry_ls$call %>% deparse() %>% paste0(collapse = "") %>% stringr::str_squish()
+  coef_tb <- coef_mat %>%  as.data.frame() %>% tibble::rownames_to_column("Parameter") %>% 
+      tibble::as_tibble() %>% dplyr::mutate(sign = cut(!!rlang::sym(p_var_nm_1L_chr), breaks = c(-Inf, 0.001, 0.01, 0.05, 0.1,Inf), 
+                                                       labels = c("***", "**", "*", ".","n.s."), right = FALSE)) 
+  if(return_1L_chr == "coefficients")
+    return_xx <- coef_tb 
+  if(return_1L_chr == "performance")
+    return_xx <- perf_tb %>%
+    dplyr::filter(!is.na(Value))
+  if(return_1L_chr == "call")
+    return_xx <- call_1L_chr
+  return(return_xx)
+}
+```
+
+```{r echo=F}
+make_mxd_lgt_mdl_ls <-  function(att_predn_mdls_ls,
+                                 dce_design_ls,
+                                 mdl_params_ls,
+                                 records_ls,
+                                 exclude_chr = character(0),
+                                 formula_env = new.env(parent = globalenv()),
+                                 max_concepts_1L_int = 2L,
+                                 min_threshold_1L_int = 1L,
+                                 return_1L_chr = "mixl"){
+  return_ls <- NULL
+  signft_concepts_chr <- get_signft_concepts(att_predn_mdls_ls, mdl_params_ls = mdl_params_ls,
+                                             min_threshold_1L_int = min_threshold_1L_int, exclude_chr = exclude_chr)
+  if(length(signft_concepts_chr) > 0){
+    signft_concepts_tb <- make_signft_concepts_tbl(att_predn_mdls_ls, mdl_params_ls) %>%
+      dplyr::filter(concept_chr %in% signft_concepts_chr)
+    choice_atts_chr <- signft_concepts_tb$predicts_ls %>% purrr::flatten_chr() %>% unique()
+    #candidate_predrs_chr <- signft_concepts_tb$predictors_ls %>% purrr::flatten_chr()
+    candidate_predrs_ls <- signft_concepts_chr %>%
+      purrr::map(~ intersect(make_candidate_predrs_chr(mdl_params_ls$candidate_predrs_tb,types_chr = mdl_params_ls$types_chr),
+                             mdl_params_ls$candidate_predrs_tb %>%
+                              dplyr::filter(concept_chr == .x) %>%
+                              dplyr::pull(short_name_chr)
+                             )) %>%
+      stats::setNames(signft_concepts_chr)
+    combns_ls <- 1:max_concepts_1L_int %>%
+      purrr::map(~{
+        combns_mat <- utils::combn(signft_concepts_chr,.x)
+        1:ncol(combns_mat) %>%
+          purrr::map(~combns_mat[,.x])
+      }) %>%
+      purrr::flatten()
+    mvars_ls_ls <- combns_ls %>%
+      purrr::map(~{
+        concepts_chr <- .x
+        predictors_chr <- candidate_predrs_ls[concepts_chr] %>% purrr::flatten_chr()
+        atts_chr <- signft_concepts_tb %>%
+          dplyr::filter(concept_chr %in% concepts_chr) %>%
+          dplyr::pull(predicts_ls) %>%
+          purrr::flatten_chr() %>%
+          unique() %>%
+          intersect(choice_atts_chr)
+        candidate_choice_predrs_ls <- purrr::map(atts_chr,
+                                                 ~ {
+                                                   slimmed_predrs_chr <- intersect(signft_concepts_tb %>%
+                                                                             dplyr::pull(paste0(.x,"_predrs_chr")) %>%
+                                                                             purrr::discard(is.na), predictors_chr)
+                                                   if(identical(slimmed_predrs_chr,character(0))){
+                                                     character(0)
+                                                   }else{
+                                                     predictors_chr
+                                                   }
+                                                 }) %>%
+          stats::setNames(atts_chr) %>%
+          purrr::compact()
+      })
+    mxd_lgt_mdl_ls <- purrr::map(mvars_ls_ls,
+                                 ~ {
+                                   mvar_ls <- .x %>%
+                                     purrr::map2(names(.x),
+                                                 ~ {
+                                                   var_predrs_chr <- .x
+                                                   if(identical(.y, records_ls$opt_out_var_nm_1L_chr)){
+                                                     var_nms_chr <- .y
+                                                   }else{
+                                                     params_tb <- dce_design_ls$choice_sets_ls$att_lvls_tb %>%
+                                                       dplyr::filter(attribute_chr ==.y)
+                                                     if(params_tb$continuous_lgl[1]){
+                                                       var_nms_chr <- .y
+                                                     }else{
+                                                       var_nms_chr <- paste0(.y,"_",dplyr::filter(params_tb,!is.na(dummy_nm_chr)) %>%
+                                                                               dplyr::pull(dummy_nm_chr))
+                                                     }
+                                                   }
+                                                   var_nms_chr %>% purrr::map(~var_predrs_chr) %>% stats::setNames(var_nms_chr)
+                                                 }) %>% purrr::flatten()
+                                   predn_mdl <- fit_choice_mdl(dce_design_ls,
+                                                               mdl_params_ls = mdl_params_ls,
+                                                               records_ls = records_ls,
+                                                               return_1L_chr = return_1L_chr,
+                                                               formula_env = formula_env,
+                                                               indl_predrs_chr = mvar_ls %>% purrr::flatten_chr() %>% unique(),
+                                                               correlation_1L_lgl = T,
+                                                               mvar_ls = mvar_ls)
+                                   predn_mdl
+                                 }) %>%
+      stats::setNames(combns_ls %>% purrr::map_chr(~paste0(.x,collapse = "_")))
+  }
+  return(mxd_lgt_mdl_ls)
+}
 ```
 
 ```{r echo=FALSE}

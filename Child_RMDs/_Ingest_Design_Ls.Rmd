@@ -8,5 +8,10 @@ date: "2022-10-10"
 We next retrieve data on the choices that participants were presented with from the code we previously ran to create the choice cards. 
 
 ```{r eval=params$eval_1L_lgl}
-dce_design_ls <- readRDS(paste0(paths_ls$Replication,"/dce_design_ls.RDS")) # Need to change to get data from online repo
+X <- Ready4useRepos(dv_nm_1L_chr = "springtolife", 
+                    dv_ds_nm_1L_chr = "https://doi.org/10.7910/DVN/VGPIPS", 
+                    dv_server_1L_chr = "dataverse.harvard.edu")
+dce_design_ls <- ingest(X,
+                        fls_to_ingest_chr = "DDD_final_dce_design_ls",
+                        metadata_1L_lgl = F)
 ```
